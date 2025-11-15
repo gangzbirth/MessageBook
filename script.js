@@ -209,8 +209,8 @@ function handleMobilePageClick(e) {
         currentPage = Math.max(0, currentPage - 1);
     } else if (currentPage < lastPageIndex) {
         currentPage = Math.min(lastPageIndex, currentPage + 1);
-    updateMobilePages();
     }
+    updateMobilePages();  // 수정: 조건문 밖으로 이동하여 모든 경우에 업데이트 실행
 }
 
 // 모바일 페이지 업데이트
