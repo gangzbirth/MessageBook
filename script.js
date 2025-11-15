@@ -22,7 +22,8 @@ const bookmark = document.querySelectorAll('.bookmark');
 document.body.classList.add('first-page');
 
 // 전역 상태
-const images = generateImagePaths('photo', 0, 132);
+const lastPageIndex = 131; // images.length - 1
+const images = generateImagePaths('photo', 0, lastPageIndex);
 let currentPage = 0;
 const imageCache = {};
 
@@ -44,33 +45,36 @@ function goToPage(pageNumber) {
         return;
     }
 
-    const clampedPage = Math.max(0, Math.min(parsedPage, images.length));
+    let clampedPage = Math.max(0, Math.min(parsedPage, lastPageIndex));
     currentPage = clampedPage % 2 === 0 ? clampedPage : clampedPage + 1;
+    if (currentPage > lastPageIndex) {
+        currentPage = lastPageIndex;
+    }
     updatePages();
 }
 
 // 페이지 업데이트
 function updatePages() {
+    const isFirstPage = currentPage === 0;
+    const isLastPage = currentPage === lastPageIndex;
+
+    // 모바일에서 first/last 클래스 토글 무시 (CSS 변경 오류 방지)
+    if (!isMobile()) {
+        document.body.classList.toggle('first-page', isFirstPage);
+        document.body.classList.toggle('last-page', isLastPage);
+    }
+
     if (isMobile()) {
         updateMobilePages();
         return;
     }
-
-    const isFirstPage = currentPage === 0;
-    const isLastPage = currentPage === 132;
-
-    leftImage.src = images[currentPage];
-    rightImage.src = images[currentPage + 1] || '';
-
-    document.body.classList.toggle('first-page', isFirstPage);
-    document.body.classList.toggle('last-page', isLastPage);
 
     if (isFirstPage) {
         leftPage.style.visibility = 'hidden';
         rightImage.src = images[0];
     } else if (isLastPage) {
         rightPage.style.visibility = 'hidden';
-        leftImage.src = images[131];
+        leftImage.src = images[lastPageIndex];
     } else {
         leftPage.style.visibility = 'visible';
         rightPage.style.visibility = 'visible';
@@ -80,30 +84,43 @@ function updatePages() {
         rightImage.src = images[currentPage] || '';
     }
 
-    console.log(currentPage)
+    console.log(currentPage);
     updatePageCounter();
     updateActiveBookmark();
 }
 
 // 페이지 카운터 업데이트
 function updatePageCounter() {
+    let displayPage;
+    if (isMobile()) {
+        displayPage = currentPage + 1; // 1-based 페이지 번호
+    } else {
+        if (currentPage === 0) {
+            displayPage = 1;
+        } else if (currentPage === lastPageIndex) {
+            displayPage = lastPageIndex + 1;
+        } else {
+            displayPage = currentPage; // 오른쪽 페이지 기준 (대략적인 중앙 페이지)
+        }
+    }
+
     pageCounter.innerHTML = `
         <input type="text"
                id="pageInput"
-               value="${currentPage}"
+               value="${displayPage}"
                pattern="\\d*"
                style="width: 50px; text-align: center;">
         / ${images.length}
     `;
 
     const pageInput = document.getElementById('pageInput');
-    if(pageInput) {
+    if (pageInput) {
         pageInput.addEventListener('blur', () => {
-            goToPage(pageInput.value);
+            goToPage(pageInput.value - 1);
         });
         pageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                goToPage(pageInput.value);
+                goToPage(pageInput.value - 1);
                 pageInput.blur();
             }
         });
@@ -115,11 +132,21 @@ function handlePageNavigation(event) {
     const isLeftPage = event.currentTarget.id === 'leftPage';
 
     if (isLeftPage && currentPage > 0) {
-        currentPage -= 2;
+        if (currentPage === 2) {
+            currentPage = 0; // 첫 페이지로
+        } else {
+            currentPage -= 2;
+        }
         updatePages();
-    }
-    else if (!isLeftPage && currentPage < images.length - 2) {
-        currentPage += 2;
+    } else if (!isLeftPage && currentPage < lastPageIndex) {
+        if (currentPage === 130) {
+            currentPage = lastPageIndex; // 마지막 단일 페이지로
+        } else {
+            currentPage += 2;
+            if (currentPage > lastPageIndex) {
+                currentPage = lastPageIndex;
+            }
+        }
         updatePages();
     }
 }
@@ -129,12 +156,23 @@ function handleDesktopKeyPress(event) {
     if (!isMobile()) {
         if (event.key === 'ArrowLeft') {
             if (currentPage > 0) {
-                currentPage -= 2;
+                if (currentPage === 2) {
+                    currentPage = 0;
+                } else {
+                    currentPage -= 2;
+                }
                 updatePages();
             }
         } else if (event.key === 'ArrowRight') {
-            if (currentPage < images.length - 2) {
-                currentPage += 2;
+            if (currentPage < lastPageIndex) {
+                if (currentPage === 130) {
+                    currentPage = lastPageIndex;
+                } else {
+                    currentPage += 2;
+                    if (currentPage > lastPageIndex) {
+                        currentPage = lastPageIndex;
+                    }
+                }
                 updatePages();
             }
         }
@@ -143,18 +181,8 @@ function handleDesktopKeyPress(event) {
 
 // 북마크 핸들러
 function handleBookmarkClick() {
-    if (!isMobile()) {
-        const targetPage = parseInt(this.dataset.page);
-        currentPage = targetPage % 2 === 0 ? targetPage : targetPage + 1;
-        updatePages();
-    } else {
-        const targetPage = parseInt(this.dataset.page);
-        currentPage = targetPage - 1;
-        if (targetPage === 2) {
-            currentPage = targetPage;
-        }
-        updatePages();
-    }
+    const targetPage = parseInt(this.dataset.page);
+    goToPage(targetPage - 1); // data-page는 1-based로 가정, 0-based로 변환
 }
 
 // 현재 페이지에 해당하는 북마크 활성화 함수
@@ -162,7 +190,7 @@ function updateActiveBookmark() {
     bookmark.forEach(bm => {
         const startPage = parseInt(bm.dataset.page);
         const endPage = parseInt(bm.dataset.endPage);
-        const isActive = currentPage >= startPage && currentPage <= endPage;
+        const isActive = currentPage >= (startPage - 1) && currentPage <= (endPage - 1);
         bm.classList.toggle('active', isActive);
     });
 }
@@ -179,16 +207,19 @@ function handleMobilePageClick(e) {
     const pageX = e.offsetX;
     if (pageX < rightPage.clientWidth / 2) {
         currentPage = Math.max(0, currentPage - 1);
-    } else {
-        currentPage = Math.min(images.length - 1, currentPage + 1);
-    }
+    } else if (currentPage < lastPageIndex) {
+        currentPage = Math.min(lastPageIndex, currentPage + 1);
     updateMobilePages();
+    }
 }
 
 // 모바일 페이지 업데이트
 function updateMobilePages() {
     rightImage.src = images[currentPage];
-    pageCounter.querySelector('input').value = currentPage;
+    const pageInput = pageCounter.querySelector('input');
+    if (pageInput) {
+        pageInput.value = currentPage + 1;
+    }
     updateActiveBookmark();
 }
 
@@ -224,6 +255,15 @@ function initEventListeners() {
     leftPage.addEventListener('click', handleClick);
     rightPage.addEventListener('click', handleClick);
     document.addEventListener('keydown', handleKeydown);
+
+    if (isMobile()) {
+        const bookmarkContainer = document.querySelector('.bookmark-container');
+        if (bookmarkContainer) {
+            bookmarkContainer.style.display = 'none';
+            bookmarkContainer.style.visibility = 'hidden';
+            bookmarkContainer.style.opacity = '0';
+        }
+    }
 }
 
 function init() {

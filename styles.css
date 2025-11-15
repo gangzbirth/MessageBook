@@ -187,7 +187,7 @@ body.first-page .right-page {
     margin: auto;
 }
 
-body.first-page .right-page img {
+body.first-page #rightImage {
     object-fit: contain;
 }
 
@@ -220,7 +220,7 @@ body.last-page .left-page {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 -5px 15px rgba(0, 0, 0, 0.1);
 }
 
-body.last-page .left-page img {
+body.last-page #leftImage {
     object-fit: contain;
 }
 
@@ -236,16 +236,28 @@ body.last-page .bookmark-container {
     body {
         background-color: #E8E8E8;
         justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
     }
 
     .ebook-container {
-        width: auto;
+        width: 100vw;
+        height: 100vh;
         background-image: none !important;
         margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .page-layout {
-        width: 100%;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .left-page {
@@ -253,37 +265,86 @@ body.last-page .bookmark-container {
     }
 
     .right-page {
-        z-index: 10;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    #rightImage {
+        max-width: calc(100% - 40px);
+        max-height: calc(100% - 40px);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        margin: 20px;
     }
 
     .bookmark-container {
-        position: fixed;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: -1; !important;
-    }
-
-    .bookmark {
-        width: 30px !important;
-        height: 60px !important;
-        font-size: 12px !important;
-        line-height: 14px !important;
-        margin: 3px 0;
-        border-radius: 5px;
-    }
-
-    .bookmark:hover, .bookmark.active {
-        width: 30px !important;
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
 
     #pageCounter {
+        position: fixed;
         bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        right: auto;
         font-size: 14px;
+        z-index: 100;
+        display: flex !important;
+        pointer-events: auto;
     }
 
-    body.first-page .right-page {
-        max-height: 55vh;
-        margin: auto;
+    #pageCounter input {
+        pointer-events: auto;
+        background: rgba(255,255,255,0.1);
+    }
+
+    body.first-page .ebook-container,
+    body.last-page .ebook-container {
+        background-image: none !important;
+    }
+
+    body.first-page .page-layout,
+    body.last-page .page-layout {
+        box-shadow: none;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    body.first-page .right-page,
+    body.last-page .right-page {
+        width: 100%;
+        height: 100%;
+    }
+
+    body.first-page #rightImage,
+    body.last-page #rightImage {
+        max-width: calc(100% - 40px);
+        max-height: calc(100% - 40px);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        margin: 20px;
+    }
+
+    body.first-page .right-page::before,
+    body.last-page .left-page::after {
+        display: none;
+    }
+
+    body.first-page .bookmark-container,
+    body.last-page .bookmark-container {
+        display: none;
+    }
+
+    body.first-page .bookmark-container {
+        padding: 50px 0 50px 7px;
     }
 }
